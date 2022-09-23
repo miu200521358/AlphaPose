@@ -1,0 +1,38 @@
+pip install pillow
+pip install cython
+pip install natsort==8.2.0
+pip install glfw halpecocotools opendr pyyaml tensorboardx terminaltables timm==0.1.20 visdom easydict
+
+python setup.py build install
+pip install cython-bbox
+pip install pycocotools
+
+"C:\MMD\AlphaPose\detector\yolo\data\yolov3-spp.weights"
+https://drive.google.com/u/0/uc?id=1D47msNOOiJKvPOXlnpyzdKA3k6E97NTC&export=download&confirm=t&uuid=64af6dea-7e57-4829-aa9d-ec60c3887481
+
+"C:\MMD\AlphaPose\detector\yolox\data\yolox_l.pth"
+https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_l.pth
+
+"C:\MMD\AlphaPose\detector\yolox\data\yolox_x.pth"
+https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_x.pth
+
+"C:\MMD\AlphaPose\pretrained_models\simple_res50_256x192.pth"
+https://drive.google.com/u/0/uc?id=1nxyfUbvWDaaT9eDM7Y31ScSVPlGy6gfw&export=download&confirm=t&uuid=9b93e5a7-c23d-45a0-b445-abd796fa8fb9
+
+"C:\MMD\AlphaPose\pretrained_models\hrnet_w32_256x192.pth"
+https://drive.google.com/u/0/uc?id=1i63BPlOnp2vSjIZ7ni4Yp3RCPQwqe922&export=download&confirm=t&uuid=6f5709d6-449f-4eee-b09b-0923a109fff5
+
+"C:\MMD\AlphaPose\pretrained_models\fast_res50_256x192.pth"
+https://drive.google.com/u/0/uc?id=1kQhnMRURFiy7NsdS8EFL-8vtqEXOgECn&export=download&confirm=t&uuid=7ebbd705-fb85-41a1-8583-bea9b95087fc
+
+"C:\MMD\AlphaPose\trackers\weights\osnet_ain_x1_0_msmt17_256x128_amsgrad_ep50_lr0.0015_coslr_b64_fb10_softmax_labsmth_flip_jitter.pth"
+blob:https://mega.nz/1bb79dd1-83ea-42ee-80c6-754df0d52bcf
+
+"C:\MMD\AlphaPose\detector\tracker\data\jde.1088x608.uncertainty.pt"
+https://drive.google.com/u/0/uc?id=1nlnuYfGNuHWZztQHXwVZSL_FvfE551pA&export=download&confirm=t&uuid=e4343bb6-2297-4aa1-8171-acf53e2855bd
+
+
+python scripts/demo_inference.py --cfg configs/coco/resnet/256x192_res50_lr1e-3_1x.yaml --checkpoint pretrained_models/fast_res50_256x192.pth --indir examples/demo/ --save_img
+
+
+python scripts/demo_inference.py --cfg configs/coco/resnet/256x192_res50_lr1e-3_1x.yaml --checkpoint pretrained_models/fast_res50_256x192.pth  --video "C:\MMD\AlphaPose\examples\demo2\buster_30fps_1100-1300.mp4"  --outdir examples/res --save_video
