@@ -31,6 +31,19 @@ blob:https://mega.nz/1bb79dd1-83ea-42ee-80c6-754df0d52bcf
 "C:\MMD\AlphaPose\detector\tracker\data\jde.1088x608.uncertainty.pt"
 https://drive.google.com/u/0/uc?id=1nlnuYfGNuHWZztQHXwVZSL_FvfE551pA&export=download&confirm=t&uuid=e4343bb6-2297-4aa1-8171-acf53e2855bd
 
+"C:\MMD\AlphaPose\pretrained_models\halpe136_fast50_256x192.pth"
+https://drive.google.com/u/0/uc?id=1LbKM2TOxKdpIZoDxCo6ldmOf62pw6z8A&export=download&confirm=t&uuid=907123f1-3257-4e55-9039-cc74e18fcbb9
+
+"C:\MMD\AlphaPose\pretrained_models\halpe136_fast50_regression_256x192.pth"
+https://drive.google.com/u/0/uc?id=1_10JYI3O-VbrAiONfL36UxLf9UXMoUYA&export=download&confirm=t&uuid=ba8e0e7e-c5ec-4284-856d-6ef0de5e2a75
+
+"C:\MMD\AlphaPose\pretrained_models\multi_domain_fast50_regression_256x192.pth"
+https://drive.google.com/u/0/uc?id=1Bb3kPoFFt-M0Y3ceqNO8DTXi1iNDd4gI&export=download&confirm=t&uuid=c18d9fc6-5f99-4331-b518-649a0a8f1756
+
+3Dモデル
+"C:\MMD\AlphaPose\pretrained_models\pretrained_w_cam.pth"
+https://drive.google.com/u/0/uc?id=16Y_MGUynFeEzV8GVtKTE5AtkHSi3xsF9&export=download&confirm=t&uuid=0c92b045-e680-4932-ab0b-5cfdae534983
+
 
 python scripts/demo_inference.py --cfg configs/coco/resnet/256x192_res50_lr1e-3_1x.yaml --checkpoint pretrained_models/fast_res50_256x192.pth --indir examples/demo/ --save_img
 
