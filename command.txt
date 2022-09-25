@@ -49,3 +49,5 @@ python scripts/demo_inference.py --cfg configs/coco/resnet/256x192_res50_lr1e-3_
 
 
 python scripts/demo_inference.py --cfg configs/coco/resnet/256x192_res50_lr1e-3_1x.yaml --checkpoint pretrained_models/fast_res50_256x192.pth  --video "C:\MMD\AlphaPose\examples\demo2\buster_30fps_1100-1300.mp4"  --outdir examples/res --save_video
+
+test
