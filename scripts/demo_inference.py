@@ -27,7 +27,7 @@ parser = argparse.ArgumentParser(description="AlphaPose Demo")
 parser.add_argument("--cfg", type=str, required=True, help="experiment configure file name")
 parser.add_argument("--checkpoint", type=str, required=True, help="checkpoint file name")
 parser.add_argument("--sp", default=False, action="store_true", help="Use single process for pytorch")
-parser.add_argument("--detector", dest="detector", help="detector name", default="yolo")
+parser.add_argument("--detector", dest="detector", help="detector name", default="tracker")
 parser.add_argument("--detfile", dest="detfile", help="detection result file", default="")
 parser.add_argument("--indir", dest="inputpath", help="image-directory", default="")
 parser.add_argument("--list", dest="inputlist", help="image-list", default="")
@@ -133,7 +133,7 @@ def check_input():
 def print_finish_info():
     print("===========================> Finish Model Running.")
     if (args.save_img or args.save_video) and not args.vis_fast:
-        print("===========================> Rendering remaining images in the queue...")
+        print("===========================> Rendering remaining images in the queue.")
         print("===========================> If this step takes too long, you can enable the --vis_fast flag to use fast rendering (real-time).")
 
 
@@ -164,7 +164,7 @@ if __name__ == "__main__":
     # Load pose model
     pose_model = builder.build_sppe(cfg.MODEL, preset_cfg=cfg.DATA_PRESET)
 
-    print("Loading pose model from %s..." % (args.checkpoint,))
+    print("Loading pose model from %s." % (args.checkpoint,))
     pose_model.load_state_dict(torch.load(args.checkpoint, map_location=args.device))
     pose_dataset = builder.retrieve_dataset(cfg.DATASET.TRAIN)
     if args.pose_track:
@@ -192,7 +192,7 @@ if __name__ == "__main__":
         writer = DataWriter(cfg, args, save_video=False, queueSize=queueSize).start()
 
     if mode == "webcam":
-        print("Starting webcam demo, press Ctrl + C to terminate...")
+        print("Starting webcam demo, press Ctrl + C to terminate.")
         sys.stdout.flush()
         im_names_desc = tqdm(loop())
     else:
@@ -254,7 +254,7 @@ if __name__ == "__main__":
         print_finish_info()
         while writer.running():
             time.sleep(1)
-            print("===========================> Rendering remaining " + str(writer.count()) + " images in the queue...", end="\r")
+            print("===========================> Rendering remaining " + str(writer.count()) + " images in the queue.", end="\r")
         writer.stop()
         det_loader.stop()
     except Exception as e:
@@ -268,7 +268,7 @@ if __name__ == "__main__":
             det_loader.terminate()
             while writer.running():
                 time.sleep(1)
-                print("===========================> Rendering remaining " + str(writer.count()) + " images in the queue...", end="\r")
+                print("===========================> Rendering remaining " + str(writer.count()) + " images in the queue.", end="\r")
             writer.stop()
         else:
             # subprocesses are killed, manually clear queues
