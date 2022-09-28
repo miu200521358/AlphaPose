@@ -9,14 +9,13 @@ import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
 
-import torch
 import numpy as np
-
-from yolox.yolox.exp import get_exp
-from yolox.utils import prep_image, prep_frame
-from yolox.yolox.utils import postprocess
+import torch
 
 from detector.apis import BaseDetector
+from yolox.utils import prep_frame, prep_image
+from yolox.yolox.exp import get_exp
+from yolox.yolox.utils import postprocess
 
 
 class YOLOXDetector(BaseDetector):

@@ -27,7 +27,7 @@ parser = argparse.ArgumentParser(description="AlphaPose Demo")
 parser.add_argument("--cfg", type=str, required=True, help="experiment configure file name")
 parser.add_argument("--checkpoint", type=str, required=True, help="checkpoint file name")
 parser.add_argument("--sp", default=False, action="store_true", help="Use single process for pytorch")
-parser.add_argument("--detector", dest="detector", help="detector name", default="tracker")
+parser.add_argument("--detector", dest="detector", help="detector name", default="yolox")
 parser.add_argument("--detfile", dest="detfile", help="detection result file", default="")
 parser.add_argument("--indir", dest="inputpath", help="image-directory", default="")
 parser.add_argument("--list", dest="inputlist", help="image-list", default="")
@@ -180,7 +180,8 @@ if __name__ == "__main__":
     # Init data writer
     queueSize = 2 if mode == "webcam" else args.qsize
     if args.save_video and mode != "image":
-        from alphapose.utils.writer import DEFAULT_VIDEO_SAVE_OPT as video_save_opt
+        from alphapose.utils.writer import \
+            DEFAULT_VIDEO_SAVE_OPT as video_save_opt
 
         if mode == "video":
             video_save_opt["savepath"] = os.path.join(args.outputpath, "AlphaPose_" + os.path.basename(input_source))
