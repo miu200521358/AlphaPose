@@ -5,11 +5,14 @@
 # @Last Modified by:   Chao Xu
 # @Last Modified time: 2019-10-27 20:20:45
 
+import copy
 import os
+
 import numpy as np
 
 from .matching import orb_matching
-from .utils import expand_bbox, stack_all_pids, best_matching_hungarian
+from .utils import best_matching_hungarian, expand_bbox, stack_all_pids
+
 
 def get_box(pose, img_height, img_width):
 
@@ -121,7 +124,7 @@ class PoseFlowWrapper():
             self.prev_img = img.copy()
             return self.final_result_by_name(frame_name)
 
-        frame_id_list = sorted([(int(os.path.splitext(i)[0]), os.path.splitext(i)[1]) for i in self.track.keys()])
+        frame_id_list = sorted([(os.path.splitext(i)[0], os.path.splitext(i)[1]) for i in self.track.keys()])
         frame_list = [ "".join([str(i[0]), i[1]]) for i in frame_id_list]
         prev_frame_name = frame_list[-2]
         prev_frame_id = prev_frame_name.split(".")[0]
