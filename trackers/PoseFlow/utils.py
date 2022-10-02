@@ -287,9 +287,9 @@ def best_matching_hungarian_kernel(
     pose_iou_dm = cal_pose_iou_dm(all_cors, box1_pose, box2_pose, num, mag)
     pose_iou = cal_pose_iou(box1_pose, box2_pose, num, mag)
     if box1_fff:
-        grade = cal_grade([dm_iou, box_iou, pose_iou_dm, pose_iou, box1_score, box2_score], weights)
+        grade = cal_grade([dm_iou, box_iou, pose_iou_dm, pose_iou, box1_score.cpu().numpy(), box2_score.cpu().numpy()], weights)
     else:
-        grade = cal_grade([dm_iou, box_iou, pose_iou_dm, pose_iou, box1_score, box2_score], weights_fff)
+        grade = cal_grade([dm_iou, box_iou, pose_iou_dm, pose_iou, box1_score.cpu().numpy(), box2_score.cpu().numpy()], weights_fff)
     return (pid1, pid2, grade)
 
 
