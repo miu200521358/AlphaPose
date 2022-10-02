@@ -6,6 +6,7 @@ pip install glfw halpecocotools opendr pyyaml tensorboardx terminaltables timm==
 python setup.py build install
 pip install cython-bbox
 pip install pycocotools
+pip install munkres==1.1.4 
 
 "C:\MMD\AlphaPose\detector\yolo\data\yolov3-spp.weights"
 https://drive.google.com/u/0/uc?id=1D47msNOOiJKvPOXlnpyzdKA3k6E97NTC&export=download&confirm=t&uuid=64af6dea-7e57-4829-aa9d-ec60c3887481
