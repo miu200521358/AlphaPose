@@ -1,5 +1,5 @@
-from collections import namedtuple
 import time
+from collections import namedtuple
 
 import numpy as np
 import torch
@@ -11,11 +11,27 @@ from .layers.Resnet import ResNet
 from .layers.smpl.SMPL import SMPL_layer
 
 ModelOutput = namedtuple(
-    typename='ModelOutput',
-    field_names=['pred_shape', 'pred_theta_mats', 'pred_phi', 'pred_delta_shape', 'pred_leaf',
-                 'pred_uvd_jts', 'pred_xyz_jts_29', 'pred_xyz_jts_24', 'pred_xyz_jts_24_struct',
-                 'pred_xyz_jts_17', 'pred_vertices', 'maxvals', 'cam_scale', 'cam_trans', 'cam_root',
-                 'uvd_heatmap', 'transl', 'img_feat']
+    typename="ModelOutput",
+    field_names=[
+        "pred_shape",
+        "pred_theta_mats",
+        "pred_phi",
+        "pred_delta_shape",
+        "pred_leaf",
+        "pred_uvd_jts",
+        "pred_xyz_jts_29",
+        "pred_xyz_jts_24",
+        "pred_xyz_jts_24_struct",
+        "pred_xyz_jts_17",
+        "pred_vertices",
+        "maxvals",
+        "cam_scale",
+        "cam_trans",
+        "cam_root",
+        "uvd_heatmap",
+        "transl",
+        "img_feat",
+    ],
 )
 ModelOutput.__new__.__defaults__ = (None,) * len(ModelOutput._fields)
 
@@ -23,7 +39,7 @@ ModelOutput.__new__.__defaults__ = (None,) * len(ModelOutput._fields)
 def norm_heatmap(norm_type, heatmap):
     # Input tensor shape: [N,C,...]
     shape = heatmap.shape
-    if norm_type == 'softmax':
+    if norm_type == "softmax":
         heatmap = heatmap.reshape(*shape[:2], -1)
         # global soft max
         heatmap = F.softmax(heatmap, 2)
@@ -36,14 +52,17 @@ def norm_heatmap(norm_type, heatmap):
 class Simple3DPoseBaseSMPLCam(nn.Module):
     def __init__(self, norm_layer=nn.BatchNorm2d, **kwargs):
         super(Simple3DPoseBaseSMPLCam, self).__init__()
-        self.deconv_dim = kwargs['NUM_DECONV_FILTERS']
+        self.deconv_dim = kwargs["NUM_DECONV_FILTERS"]
         self._norm_layer = norm_layer
-        self.num_joints = kwargs['NUM_JOINTS']
-        self.norm_type = kwargs['POST']['NORM_TYPE']
-        self.depth_dim = kwargs['EXTRA']['DEPTH_DIM']
-        self.height_dim = kwargs['HEATMAP_SIZE'][0]
-        self.width_dim = kwargs['HEATMAP_SIZE'][1]
+        self.num_joints = kwargs["NUM_JOINTS"]
+        self.norm_type = kwargs["POST"]["NORM_TYPE"]
+        self.depth_dim = kwargs["EXTRA"]["DEPTH_DIM"]
+        self.height_dim = kwargs["HEATMAP_SIZE"][0]
+        self.width_dim = kwargs["HEATMAP_SIZE"][1]
         self.smpl_dtype = torch.float32
+        self.h36m_jregressor_path = kwargs["H36M_JREGRESSOR_PATH"]
+        self.smpl_layer_path = kwargs["SMPL_LAYER_PATH"]
+        self.init_shape_path = kwargs["INIT_SHAPE_PATH"]
 
         backbone = ResNet
 
@@ -51,59 +70,47 @@ class Simple3DPoseBaseSMPLCam(nn.Module):
 
         # Imagenet pretrain model
         import torchvision.models as tm
-        if kwargs['NUM_LAYERS'] == 101:
-            ''' Load pretrained model '''
+
+        if kwargs["NUM_LAYERS"] == 101:
+            """Load pretrained model"""
             x = tm.resnet101(pretrained=True)
             self.feature_channel = 2048
-        elif kwargs['NUM_LAYERS'] == 50:
+        elif kwargs["NUM_LAYERS"] == 50:
             x = tm.resnet50(pretrained=True)
             self.feature_channel = 2048
-        elif kwargs['NUM_LAYERS'] == 34:
+        elif kwargs["NUM_LAYERS"] == 34:
             x = tm.resnet34(pretrained=True)
             self.feature_channel = 512
-        elif kwargs['NUM_LAYERS'] == 18:
+        elif kwargs["NUM_LAYERS"] == 18:
             x = tm.resnet18(pretrained=True)
             self.feature_channel = 512
         else:
             raise NotImplementedError
         model_state = self.preact.state_dict()
-        state = {k: v for k, v in x.state_dict().items()
-                 if k in self.preact.state_dict() and v.size() == self.preact.state_dict()[k].size()}
+        state = {k: v for k, v in x.state_dict().items() if k in self.preact.state_dict() and v.size() == self.preact.state_dict()[k].size()}
         model_state.update(state)
         self.preact.load_state_dict(model_state)
 
         self.deconv_layers = self._make_deconv_layer()
-        self.final_layer = nn.Conv2d(
-            self.deconv_dim[2], self.num_joints * self.depth_dim, kernel_size=1, stride=1, padding=0)
+        self.final_layer = nn.Conv2d(self.deconv_dim[2], self.num_joints * self.depth_dim, kernel_size=1, stride=1, padding=0)
 
-        h36m_jregressor = np.load('./model_files/J_regressor_h36m.npy')
-        self.smpl = SMPL_layer(
-            './model_files/basicModel_neutral_lbs_10_207_0_v1.0.0.pkl',
-            h36m_jregressor=h36m_jregressor,
-            dtype=self.smpl_dtype
-        )
+        h36m_jregressor = np.load(self.h36m_jregressor_path)
+        self.smpl = SMPL_layer(self.smpl_layer_path, h36m_jregressor=h36m_jregressor, dtype=self.smpl_dtype)
 
-        self.joint_pairs_24 = ((1, 2), (4, 5), (7, 8),
-                               (10, 11), (13, 14), (16, 17), (18, 19), (20, 21), (22, 23))
+        self.joint_pairs_24 = ((1, 2), (4, 5), (7, 8), (10, 11), (13, 14), (16, 17), (18, 19), (20, 21), (22, 23))
 
-        self.joint_pairs_29 = ((1, 2), (4, 5), (7, 8),
-                               (10, 11), (13, 14), (16, 17), (18, 19), (20, 21),
-                               (22, 23), (25, 26), (27, 28))
+        self.joint_pairs_29 = ((1, 2), (4, 5), (7, 8), (10, 11), (13, 14), (16, 17), (18, 19), (20, 21), (22, 23), (25, 26), (27, 28))
 
         self.leaf_pairs = ((0, 1), (3, 4))
         self.root_idx_smpl = 0
 
         # mean shape
-        init_shape = np.load('./model_files/h36m_mean_beta.npy')
-        self.register_buffer(
-            'init_shape',
-            torch.Tensor(init_shape).float())
+        init_shape = np.load(self.init_shape_path)
+        self.register_buffer("init_shape", torch.Tensor(init_shape).float())
 
         init_cam = torch.tensor([0.9, 0, 0])
-        self.register_buffer(
-            'init_cam',
-            torch.Tensor(init_cam).float()) 
-    
+        self.register_buffer("init_cam", torch.Tensor(init_cam).float())
+
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
         self.fc1 = nn.Linear(self.feature_channel, 1024)
         self.drop1 = nn.Dropout(p=0.5)
@@ -113,19 +120,16 @@ class Simple3DPoseBaseSMPLCam(nn.Module):
         self.decphi = nn.Linear(1024, 23 * 2)  # [cos(phi), sin(phi)]
         self.deccam = nn.Linear(1024, 3)
 
-        self.focal_length = kwargs['FOCAL_LENGTH']
+        self.focal_length = kwargs["FOCAL_LENGTH"]
         self.input_size = 256.0
 
     def _make_deconv_layer(self):
         deconv_layers = []
-        deconv1 = nn.ConvTranspose2d(
-            self.feature_channel, self.deconv_dim[0], kernel_size=4, stride=2, padding=int(4 / 2) - 1, bias=False)
+        deconv1 = nn.ConvTranspose2d(self.feature_channel, self.deconv_dim[0], kernel_size=4, stride=2, padding=int(4 / 2) - 1, bias=False)
         bn1 = self._norm_layer(self.deconv_dim[0])
-        deconv2 = nn.ConvTranspose2d(
-            self.deconv_dim[0], self.deconv_dim[1], kernel_size=4, stride=2, padding=int(4 / 2) - 1, bias=False)
+        deconv2 = nn.ConvTranspose2d(self.deconv_dim[0], self.deconv_dim[1], kernel_size=4, stride=2, padding=int(4 / 2) - 1, bias=False)
         bn2 = self._norm_layer(self.deconv_dim[1])
-        deconv3 = nn.ConvTranspose2d(
-            self.deconv_dim[1], self.deconv_dim[2], kernel_size=4, stride=2, padding=int(4 / 2) - 1, bias=False)
+        deconv3 = nn.ConvTranspose2d(self.deconv_dim[1], self.deconv_dim[2], kernel_size=4, stride=2, padding=int(4 / 2) - 1, bias=False)
         bn3 = self._norm_layer(self.deconv_dim[2])
 
         deconv_layers.append(deconv1)
@@ -155,27 +159,23 @@ class Simple3DPoseBaseSMPLCam(nn.Module):
     def uvd_to_cam(self, uvd_jts, trans_inv, intrinsic_param, joint_root, depth_factor, return_relative=True):
         assert uvd_jts.dim() == 3 and uvd_jts.shape[2] == 3, uvd_jts.shape
         uvd_jts_new = uvd_jts.clone()
-        assert torch.sum(torch.isnan(uvd_jts)) == 0, ('uvd_jts', uvd_jts)
+        assert torch.sum(torch.isnan(uvd_jts)) == 0, ("uvd_jts", uvd_jts)
 
         # remap uv coordinate to input space
         uvd_jts_new[:, :, 0] = (uvd_jts[:, :, 0] + 0.5) * self.width_dim * 4
         uvd_jts_new[:, :, 1] = (uvd_jts[:, :, 1] + 0.5) * self.height_dim * 4
         # remap d to mm
         uvd_jts_new[:, :, 2] = uvd_jts[:, :, 2] * depth_factor
-        assert torch.sum(torch.isnan(uvd_jts_new)) == 0, ('uvd_jts_new', uvd_jts_new)
+        assert torch.sum(torch.isnan(uvd_jts_new)) == 0, ("uvd_jts_new", uvd_jts_new)
 
         dz = uvd_jts_new[:, :, 2]
 
         # transform in-bbox coordinate to image coordinate
-        uv_homo_jts = torch.cat(
-            (uvd_jts_new[:, :, :2], torch.ones_like(uvd_jts_new)[:, :, 2:]),
-            dim=2)
+        uv_homo_jts = torch.cat((uvd_jts_new[:, :, :2], torch.ones_like(uvd_jts_new)[:, :, 2:]), dim=2)
         # batch-wise matrix multipy : (B,1,2,3) * (B,K,3,1) -> (B,K,2,1)
         uv_jts = torch.matmul(trans_inv.unsqueeze(1), uv_homo_jts.unsqueeze(-1))
         # transform (u,v,1) to (x,y,z)
-        cam_2d_homo = torch.cat(
-            (uv_jts, torch.ones_like(uv_jts)[:, :, :1, :]),
-            dim=2)
+        cam_2d_homo = torch.cat((uv_jts, torch.ones_like(uv_jts)[:, :, :1, :]), dim=2)
         # batch-wise matrix multipy : (B,1,3,3) * (B,K,3,1) -> (B,K,3,1)
         xyz_jts = torch.matmul(intrinsic_param.unsqueeze(1), cam_2d_homo)
         xyz_jts = xyz_jts.squeeze(dim=3)
@@ -203,7 +203,7 @@ class Simple3DPoseBaseSMPLCam(nn.Module):
 
         # flip
         if shift:
-            pred_jts[:, :, 0] = - pred_jts[:, :, 0]
+            pred_jts[:, :, 0] = -pred_jts[:, :, 0]
         else:
             pred_jts[:, :, 0] = -1 / self.width_dim - pred_jts[:, :, 0]
 
@@ -217,7 +217,7 @@ class Simple3DPoseBaseSMPLCam(nn.Module):
             pred_jts = pred_jts.reshape(num_batches, self.num_joints * 3)
 
         return pred_jts
-    
+
     def flip_xyz_coord(self, pred_jts, flatten=True):
         if flatten:
             assert pred_jts.dim() == 2
@@ -227,7 +227,7 @@ class Simple3DPoseBaseSMPLCam(nn.Module):
             assert pred_jts.dim() == 3
             num_batches = pred_jts.shape[0]
 
-        pred_jts[:, :, 0] = - pred_jts[:, :, 0]
+        pred_jts[:, :, 0] = -pred_jts[:, :, 0]
 
         for pair in self.joint_pairs_29:
             dim0, dim1 = pair
@@ -252,7 +252,7 @@ class Simple3DPoseBaseSMPLCam(nn.Module):
         return pred_phi
 
     def forward(self, x, flip_item=None, flip_output=False, gt_uvd=None, gt_uvd_weight=None, **kwargs):
-        
+
         batch_size = x.shape[0]
 
         # torch.cuda.synchronize()
@@ -297,8 +297,8 @@ class Simple3DPoseBaseSMPLCam(nn.Module):
 
         x0 = self.avg_pool(x0)
         x0 = x0.view(x0.size(0), -1)
-        init_shape = self.init_shape.expand(batch_size, -1)     # (B, 10,)
-        init_cam = self.init_cam.expand(batch_size, -1) # (B, 3,)
+        init_shape = self.init_shape.expand(batch_size, -1)  # (B, 10,)
+        init_cam = self.init_cam.expand(batch_size, -1)  # (B, 3,)
 
         xc = x0
 
@@ -318,13 +318,20 @@ class Simple3DPoseBaseSMPLCam(nn.Module):
         camDepth = self.focal_length / (self.input_size * camScale + 1e-9)
 
         pred_xyz_jts_29 = torch.zeros_like(pred_uvd_jts_29)
-        pred_xyz_jts_29[:, :, 2:] = pred_uvd_jts_29[:, :, 2:].clone() # unit: 2.2m
-        pred_xyz_jts_29_meter = (pred_uvd_jts_29[:, :, :2] * self.input_size / self.focal_length) \
-                                        * (pred_xyz_jts_29[:, :, 2:]*2.2 + camDepth) - camTrans # unit: m
+        pred_xyz_jts_29[:, :, 2:] = pred_uvd_jts_29[:, :, 2:].clone()  # unit: 2.2m
+        pred_xyz_jts_29_meter = (pred_uvd_jts_29[:, :, :2] * self.input_size / self.focal_length) * (
+            pred_xyz_jts_29[:, :, 2:] * 2.2 + camDepth
+        ) - camTrans  # unit: m
 
-        pred_xyz_jts_29[:, :, :2] = pred_xyz_jts_29_meter / 2.2 # unit: 2.2m
+        pred_xyz_jts_29[:, :, :2] = pred_xyz_jts_29_meter / 2.2  # unit: 2.2m
 
-        camera_root = pred_xyz_jts_29[:, [0], ]*2.2
+        camera_root = (
+            pred_xyz_jts_29[
+                :,
+                [0],
+            ]
+            * 2.2
+        )
         camera_root[:, :, :2] += camTrans
         camera_root[:, :, [2]] += camDepth
 
@@ -339,7 +346,7 @@ class Simple3DPoseBaseSMPLCam(nn.Module):
             pred_xyz_jts_29 = self.flip_xyz_coord(pred_xyz_jts_29, flatten=False)
         if flip_output and flip_item is not None:
             pred_xyz_jts_29 = (pred_xyz_jts_29 + pred_xyz_jts_29_orig.reshape(batch_size, 29, 3)) / 2
-        
+
         pred_xyz_jts_29_flat = pred_xyz_jts_29.reshape(batch_size, -1)
 
         pred_phi = pred_phi.reshape(batch_size, 23, 2)
@@ -352,11 +359,11 @@ class Simple3DPoseBaseSMPLCam(nn.Module):
             pred_shape = (pred_shape + pred_shape_orig) / 2
 
         output = self.smpl.hybrik(
-            pose_skeleton=pred_xyz_jts_29.type(self.smpl_dtype) * 2.2, # unit: meter
+            pose_skeleton=pred_xyz_jts_29.type(self.smpl_dtype) * 2.2,  # unit: meter
             betas=pred_shape.type(self.smpl_dtype),
             phis=pred_phi.type(self.smpl_dtype),
             global_orient=None,
-            return_verts=True
+            return_verts=True,
         )
         pred_vertices = output.vertices.float()
         #  -0.5 ~ 0.5
@@ -398,11 +405,6 @@ class Simple3DPoseBaseSMPLCam(nn.Module):
 
     def forward_gt_theta(self, gt_theta, gt_beta):
 
-        output = self.smpl(
-            pose_axis_angle=gt_theta,
-            betas=gt_beta,
-            global_orient=None,
-            return_verts=True
-        )
+        output = self.smpl(pose_axis_angle=gt_theta, betas=gt_beta, global_orient=None, return_verts=True)
 
         return output
