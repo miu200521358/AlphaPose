@@ -164,14 +164,14 @@ def get_install_requires():
 
 
 def is_installed(package_name):
-    try:
-        from pip._internal.utils.misc import get_installed_distributions
-    except ImportError:  # pip<10
-        from pip import get_installed_distributions
+    # try:
+    #     from pip._internal.utils.misc import get_installed_distributions
+    # except ImportError:  # pip<10
+    #     from pip import get_installed_distributions
 
-    for p in get_installed_distributions():
-        if package_name in p.egg_name():
-            return True
+    # for p in get_installed_distributions():
+    #     if package_name in p.egg_name():
+    #         return True
     return False
 
 
