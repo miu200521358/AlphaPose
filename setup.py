@@ -172,7 +172,7 @@ def is_installed(package_name):
     # for p in get_installed_distributions():
     #     if package_name in p.egg_name():
     #         return True
-    return False
+    return True
 
 
 if __name__ == "__main__":
